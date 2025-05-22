@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Анализ выгрузки СЭМД{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">Анализ выгрузки СЭМД</h2>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+{% if filename %}
+<p><strong>Файл:</strong> {{ filename }}</p>
+{% endif %}
+
+<div id="errors" class="section">
+    <h4>❌ Расшифровка ошибок</h4>
+    {% if table_errors %}{{ table_errors|safe }}{% else %}<p><em>Нет данных</em></p>{% endif %}
+</div>
+
+<div id="doctors" class="section">
+    <h4>👨‍⚕️ Врачи, выполнившие > 500 СЭМД</h4>
+    {% if table_doctors %}{{ table_doctors|safe }}{% else %}<p><em>Нет данных</em></p>{% endif %}
+</div>
+
+<div id="types" class="section">
+    <h4>📊 Статистика по типам СЭМД</h4>
+    {% if table_types %}{{ table_types|safe }}{% else %}<p><em>Нет данных</em></p>{% endif %}
+</div>
+
+<div id="cert_errors" class="section">
+    <h4>🔐 Ошибки при выборе сертификата</h4>
+    {% if table_cert_errors %}{{ table_cert_errors|safe }}{% else %}<p><em>Нет данных</em></p>{% endif %}
+</div>
+
+<div id="pie" class="section">
+    <h4>🟣 Круговая диаграмма передачи в РЭМД</h4>
+    <canvas id="pieChart" width="400" height="300"></canvas>
+    <script>
+        const pieCtx = document.getElementById('pieChart');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: {{ pie_labels|default([])|tojson }},
+                datasets: [{
+                    data: {{ pie_values|default([])|tojson }},
+                    backgroundColor: ['#4e79a7', '#f28e2c', '#e15759', '#76b7b2']
+                }]
+            }
+        });
+    </script>
+</div>
+
+<div id="bar" class="section">
+    <h4>📉 Столбчатая диаграмма ошибок передачи</h4>
+    <canvas id="barChart" width="400" height="300"></canvas>
+    <script>
+        const barCtx = document.getElementById('barChart');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ bar_labels|default([])|tojson }},
+                datasets: [{
+                    label: "Ошибки",
+                    data: {{ bar_values|default([])|tojson }},
+                    backgroundColor: '#f28e2c'
+                }]
+            },
+            options: {
+                indexAxis: 'y'
+            }
+        });
+    </script>
+</div>
+
+<div id="raw" class="section">
+    <h4>📋 Исходные данные</h4>
+
+    {% if table_raw %}
+        <button class="btn btn-outline-primary mb-3" onclick="toggleRawTable()">
+            📂 Показать/Скрыть основную таблицу
+        </button>
+        <div id="rawTableBlock" style="display: none;">
+            <div class="table-responsive mb-4">
+                {{ table_raw | safe }}
+            </div>
+        </div>
+    {% else %}
+        <p><em>Нет данных</em></p>
+    {% endif %}
+
+    {% if table_errors_dict %}
+        <button class="btn btn-outline-secondary mb-3" onclick="toggleReference()">
+            🔍 Показать/Скрыть справочник ошибок
+        </button>
+        <div id="errorReferenceBlock" style="display: none;">
+            <div class="card card-body">
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd;">
+                    {{ table_errors_dict | safe }}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+
+<script>
+function toggleReference() {
+    const block = document.getElementById("errorReferenceBlock");
+    block.style.display = block.style.display === "none" ? "block" : "none";
+}
+function toggleRawTable() {
+    const block = document.getElementById("rawTableBlock");
+    block.style.display = block.style.display === "none" ? "block" : "none";
+}
+    document.addEventListener("DOMContentLoaded", function () {
+        const mainTable = document.getElementById("mainTable");
+        if (mainTable) {
+            $('#mainTable').DataTable({
+                pageLength: 50,
+                lengthMenu: [10, 25, 50, 100, 1000],
+                scrollY: "300px",
+                scrollCollapse: true
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% endblock %}

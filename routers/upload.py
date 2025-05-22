@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, UploadFile, File
 from fastapi.responses import HTMLResponse
-from app.services.xlsx_parser import parse_xlsx
+from app.services.xlsx_parser import parse_xlsx, load_error_reference
 
 router = APIRouter()
 
@@ -17,10 +17,13 @@ async def upload(request: Request, file: UploadFile = File(...)):
             })
         
         contents = await file.read()
-        table_html = parse_xlsx(contents)
+        table_raw = parse_xlsx(contents)
+
+        table_errors_dict = load_error_reference()
 
         return request.app.templates.TemplateResponse("upload.html", {
                 "request": request,
-                "table_html": table_html,
-                "filename": file.filename
+                "filename": file.filename,
+                "table_raw": table_raw,
+                "table_errors_dict": table_errors_dict
         })
