@@ -1,12 +1,15 @@
 from fastapi import APIRouter, Request, UploadFile, File
 from fastapi.responses import HTMLResponse
-from app.services.xlsx_parser import parse_xlsx, load_error_reference
+from services.xlsx_handler import generate_tables
 
 router = APIRouter()
 
+
 @router.get("/", response_class=HTMLResponse)
 async def index(request: Request):
-        return request.app.templates.TemplateResponse("upload.html", {"request": request})
+    return request.app.templates.TemplateResponse("upload.html", {
+        "request": request
+    })
 
 @router.post("/upload", response_class=HTMLResponse)
 async def upload(request: Request, file: UploadFile = File(...)):
@@ -17,13 +20,12 @@ async def upload(request: Request, file: UploadFile = File(...)):
             })
         
         contents = await file.read()
-        table_raw = parse_xlsx(contents)
-
-        table_errors_dict = load_error_reference()
+        tables_data = generate_tables(contents)
 
         return request.app.templates.TemplateResponse("upload.html", {
                 "request": request,
                 "filename": file.filename,
-                "table_raw": table_raw,
-                "table_errors_dict": table_errors_dict
+                "tables": tables_data["tables"],
+                "pie_labels": tables_data["pie_labels"],
+                "pie_values": tables_data["pie_values"]
         })

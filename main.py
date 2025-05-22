@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.routers import upload
+from routers import upload
 from settings import TEMPLATES_DIR, STATIC_DIR
 
 app = FastAPI()
